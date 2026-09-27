@@ -16,7 +16,7 @@ import dataclasses
 
 import numpy
 
-from lws.domain.weights import Bf16Weights, ElementCount
+from lws.domain.weights import Bf16Weights, ElementCount, split_bit_pattern
 
 TOP_EXPONENTS_TRACKED = 15
 EXPONENT_ALPHABET_SIZE = 256
@@ -89,9 +89,10 @@ def measure_tensor(weights: Bf16Weights) -> TensorEntropyReport:
 
 def _split_histograms(weights: Bf16Weights) -> tuple[numpy.ndarray, numpy.ndarray, numpy.ndarray]:
     pattern = weights.bit_pattern
+    exponent, sign_mantissa = split_bit_pattern(weights)
+    exponent_byte = exponent.value
+    sign_mantissa_byte = sign_mantissa.value
     unsigned = pattern.astype(numpy.uint16)
-    exponent_byte = ((unsigned >> 7) & 0xFF).astype(numpy.uint8)
-    sign_mantissa_byte = (((unsigned >> 8) & 0x80) | (unsigned & 0x7F)).astype(numpy.uint8)
     exponent_counts = numpy.bincount(exponent_byte, minlength=EXPONENT_ALPHABET_SIZE)
     sign_mantissa_counts = numpy.bincount(sign_mantissa_byte, minlength=SIGN_MANTISSA_ALPHABET_SIZE)
     full_counts = numpy.bincount(unsigned, minlength=FULL_ALPHABET_SIZE)

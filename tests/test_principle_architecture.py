@@ -528,17 +528,29 @@ def _chain_depth_and_root(node: ast.Attribute) -> tuple[int, str | None]:
     return depth, None
 
 
+def _attribute_parent_ids(tree: ast.Module) -> set[int]:
+    # An Attribute node that is itself the `.value` of another Attribute is
+    # an inner link of a longer chain — the OUTER node is where that chain's
+    # full depth is visible, so only the outer one should be reported.
+    parented = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Attribute) and isinstance(node.value, ast.Attribute):
+            parented.add(id(node.value))
+    return parented
+
+
 def _check_rule_5(file: SourceFile) -> list[Violation]:
+    parented_ids = _attribute_parent_ids(file.tree)
     violations = []
     for node in ast.walk(file.tree):
         if isinstance(node, ast.Attribute) and isinstance(node.ctx, ast.Load):
-            violations.extend(_check_rule_5_attribute(file, node))
+            violations.extend(_check_rule_5_attribute(file, node, parented_ids))
     return _keep_unexcused(file, 5, violations)
 
 
-def _check_rule_5_attribute(file: SourceFile, node: ast.Attribute) -> list[Violation]:
-    if isinstance(node.value, ast.Attribute):
-        return []  # only report at the outermost Attribute of a chain
+def _check_rule_5_attribute(file: SourceFile, node: ast.Attribute, parented_ids: set[int]) -> list[Violation]:
+    if id(node) in parented_ids:
+        return []
     depth, root = _chain_depth_and_root(node)
     if root is None or depth < 2:
         return []

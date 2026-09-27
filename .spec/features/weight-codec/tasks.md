@@ -21,7 +21,7 @@
 - Effort: high
 - Notes: First write tests/test_principle_architecture.py, an AST-based fitness test over src/lws that enforces P-013 (import direction per layer, no relative imports, every Protocol in `lws.application.ports` has an adapter and a fake in tests/fakes.py) and P-014 (the nine rules per layer as the constitution tables them, `# calisthenics: allow` markers accepted only in adapters and printed in the test output); it carries @principle:P-013 and @principle:P-014 and must stay green for every later task. Then the analyzer: exponent/sign-mantissa histograms and entropy in `lws.domain.entropy` (numpy only, value objects such as `Bits` and `ElementCount`); the `WeightSource` port streams named tensors; the safetensors adapter reads shards lazily (torch framework, no full-model load) and hands int16 views to the domain as numpy arrays; `lws.analyze` only parses arguments and wires the adapter into the use case. Tests use small synthetic safetensors files built in tmp_path and the in-memory fake source; a separate test marked `model` runs on LWS_MODEL_DIR and only writes the report (skips without it).
 
-## T-002 — SE12 reference codec (CPU) [pending]
+## T-002 — SE12 reference codec (CPU) [concluida]
 
 - Refs: US-002, AC-003, AC-004, AC-005
 - Files: src/lws/domain/se12/__init__.py, src/lws/domain/se12/codebook.py, src/lws/domain/se12/tile.py, src/lws/domain/se12/codec.py, tests/test_spec_se12_roundtrip.py, src/lws/adapters/safetensors/weight_source.py
