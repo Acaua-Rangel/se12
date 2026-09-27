@@ -144,3 +144,37 @@ class FakeCandidateEvaluator:
 
     def evaluate(self, configuration):
         return self.results[configuration]
+
+
+class FakeBenchmarkTimer:
+    """A BenchmarkTimer returning fixed, pre-set samples and bandwidth."""
+
+    def __init__(self, samples, peak_bandwidth) -> None:
+        self.samples = samples
+        self.peak_bandwidth = peak_bandwidth
+        self.timed_operations: list = []
+
+    def time_operation(self, operation, counts):
+        self.timed_operations.append((operation, counts))
+        operation()
+        return self.samples
+
+    def measure_peak_copy_bandwidth(self):
+        return self.peak_bandwidth
+
+
+class FakeReportStore:
+    """A ReportStore that keeps its files in memory instead of on disk."""
+
+    def __init__(self, initial_micro_reports=()) -> None:
+        self.micro_reports = list(initial_micro_reports)
+        self.verdict_reports: dict = {}
+
+    def write_micro_report(self, gpu_slug, payload) -> None:
+        self.micro_reports.append(payload)
+
+    def write_verdict_report(self, gpu_slug, payload) -> None:
+        self.verdict_reports[gpu_slug] = payload
+
+    def read_all_micro_reports(self):
+        return tuple(self.micro_reports)

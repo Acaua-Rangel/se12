@@ -41,7 +41,7 @@
 - Effort: medium
 - Notes: src/lws/adapters/cuda/gemv.py is a read-only dependency (runs after T-005). Search space and best-choice rule are domain; the use case runs candidates through the `MatVecKernel` port and saves through the `TuningCache` port (JSON file adapter). Same search space for raw and fused, each keeps its own best. Writes `tune-<gpu-slug>.json`; a file with another slug is ignored with a warning. `lws.tune` is the composition root (`python -m lws.tune`). The heuristic-only test runs with an empty cache dir.
 
-## T-006 — Microbenchmark, per-GPU verdict and cross-GPU summary [pending]
+## T-006 — Microbenchmark, per-GPU verdict and cross-GPU summary [concluida]
 
 - Refs: US-006, US-007, AC-012, AC-013, AC-014, AC-023
 - Files: src/lws/domain/benchmark/__init__.py, src/lws/domain/benchmark/statistics.py, src/lws/domain/benchmark/verdict.py, src/lws/domain/benchmark/summary.py, src/lws/application/ports/gpu/benchmark_timer.py, src/lws/application/ports/gpu/report_store.py, src/lws/application/gpu/run_microbenchmark.py, src/lws/application/gpu/summarize_reports.py, src/lws/adapters/cuda/benchmark_timer.py, src/lws/adapters/filesystem/report_store.py, src/lws/bench/__init__.py, src/lws/bench/micro.py, src/lws/bench/summary.py, tests/test_spec_microbench.py, src/lws/adapters/cuda/gemv.py
