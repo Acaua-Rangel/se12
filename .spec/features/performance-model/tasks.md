@@ -8,7 +8,7 @@
   All Python code follows P-013 (hexagonal) and P-014 (object calisthenics).
 -->
 
-## T-013 — Calibration microkernels and roofline model [pending]
+## T-013 — Calibration microkernels and roofline model [concluida]
 
 - Refs: US-015, AC-026
 - Files: src/lws/domain/performance/__init__.py, src/lws/domain/performance/roofline.py, src/lws/application/ports/gpu/calibration_probe.py, src/lws/application/gpu/calibrate_device.py, src/lws/adapters/cuda/calibration_probe.py, src/lws/adapters/cuda/kernels/calibration.cu, src/lws/bench/calibrate.py, tests/test_spec_performance_model.py, src/lws/adapters/cuda/gemv.py

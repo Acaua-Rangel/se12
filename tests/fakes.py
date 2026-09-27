@@ -178,3 +178,17 @@ class FakeReportStore:
 
     def read_all_micro_reports(self):
         return tuple(self.micro_reports)
+
+
+class FakeCalibrationProbe:
+    """A CalibrationProbe returning fixed, pre-set bandwidth and costs."""
+
+    def __init__(self, bandwidth, costs_by_batch: dict) -> None:
+        self.bandwidth = bandwidth
+        self.costs_by_batch = costs_by_batch
+
+    def measure_bandwidth(self):
+        return self.bandwidth
+
+    def measure_compute_bound_costs(self, batch):
+        return self.costs_by_batch[batch.value]
