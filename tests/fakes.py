@@ -12,8 +12,11 @@ from lws.application.ports.codec.pack_source import ShardOfTensors
 from lws.application.ports.codec.packed_store import PackedShard
 from lws.application.ports.codec.weight_source import SourceTensor
 from lws.application.ports.gpu.kernel_compiler import CompiledKernelHandle, CudaSource
+from lws.application.ports.gpu.weight_decoder import RowIndices
 from lws.domain.device.decisions import CompileTarget, SupportVerdict
 from lws.domain.device.properties import DeviceProperties, SoftwareVersions
+from lws.domain.se12.codec import Se12Tensor, decode_tensor
+from lws.domain.weights import Bf16Weights
 
 
 class FakeWeightSource:
@@ -81,3 +84,25 @@ class FakeKernelCompiler:
     def compile(self, source: CudaSource, target: CompileTarget) -> CompiledKernelHandle:
         self.compiled.append((source, target))
         return FakeCompiledKernelHandle(target)
+
+
+class Se12CodecWeightDecoder:
+    """A WeightDecoder backed purely by the CPU reference codec (T-002) —
+    the oracle a real GPU decoder is checked against (constitution P-013:
+    "every port has ... one in-memory fake used by the tests")."""
+
+    def decode(self, tensor: Se12Tensor) -> Bf16Weights:
+        return decode_tensor(tensor)
+
+    def decode_rows(self, tensor: Se12Tensor, rows: RowIndices) -> Bf16Weights:
+        full = decode_tensor(tensor)
+        metadata = tensor.metadata
+        geometry = metadata.geometry
+        shape = geometry.shape
+        cols = shape.cols
+        pattern = full.bit_pattern
+        matrix = pattern.reshape(-1, cols)
+        row_values = list(rows.values)
+        selected = matrix[row_values, :]
+        flattened = selected.reshape(-1).copy()
+        return Bf16Weights(bit_pattern=flattened)

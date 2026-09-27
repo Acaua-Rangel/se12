@@ -17,7 +17,7 @@
 - Effort: high
 - Notes: The `GpuProbe` adapter is the ONLY code that reads hardware facts (principle P-012): device selection (`LWS_DEVICE`), properties via torch + `cupy.cuda.runtime.getDeviceProperties` (SM count, L2, memory clock, bus width), torch smoke test, NVRTC supported targets. It returns a `DeviceProperties` value object (a composition — identity, compute, memory — to respect P-014 rule 8). All decisions are pure domain rules over it: GPU slug (`<lowercased name, non-alnum → '-'>-sm<major><minor>`), compile target (SASS → PTX fallback → refuse), compute profile (`bf16-native` if cc ≥ 8.0 else `fp32-act`), VRAM fit per feature/model profile — so the CPU tests cover sm_52/60/75/86/90/120 with fake properties and no GPU. The `KernelCompiler` adapter compiles with CuPy RawModule using the chosen target, honors `LWS_FORCE_PTX=1`, caches binaries under `$LWS_CACHE_DIR` (default `~/.cache/lws`) keyed by source hash + NVRTC version + target, and launches on torch's current stream via `cupy.cuda.ExternalStream`. `lws.device` is the composition root of the doctor. The compile-target test carries @principle:P-008. GPU tests marked `gpu`.
 
-## T-004 — CUDA C decode-only kernel [pending]
+## T-004 — CUDA C decode-only kernel [concluida]
 
 - Refs: US-004, AC-009, AC-022
 - Files: src/lws/adapters/cuda/kernels/se12_decode.cu, src/lws/adapters/cuda/kernels/se12_common.cuh, src/lws/application/ports/gpu/weight_decoder.py, src/lws/adapters/cuda/se12_decoder.py, tests/test_spec_gpu_decode.py, src/lws/adapters/cuda/nvrtc_compiler.py
