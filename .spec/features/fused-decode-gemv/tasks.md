@@ -9,7 +9,7 @@
   CUDA C kernels are adapter assets and are exempt from P-014.
 -->
 
-## T-011 — Device doctor and arch-aware NVRTC compiler [pending]
+## T-011 — Device doctor and arch-aware NVRTC compiler [concluida]
 
 - Refs: US-012, AC-021, AC-022
 - Files: src/lws/domain/device/__init__.py, src/lws/domain/device/properties.py, src/lws/domain/device/decisions.py, src/lws/application/ports/gpu/__init__.py, src/lws/application/ports/gpu/gpu_probe.py, src/lws/application/ports/gpu/kernel_compiler.py, src/lws/application/gpu/__init__.py, src/lws/application/gpu/diagnose_device.py, src/lws/adapters/cuda/__init__.py, src/lws/adapters/cuda/gpu_probe.py, src/lws/adapters/cuda/nvrtc_compiler.py, src/lws/device.py, tests/test_spec_device.py

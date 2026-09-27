@@ -11,6 +11,9 @@ import typing
 from lws.application.ports.codec.pack_source import ShardOfTensors
 from lws.application.ports.codec.packed_store import PackedShard
 from lws.application.ports.codec.weight_source import SourceTensor
+from lws.application.ports.gpu.kernel_compiler import CompiledKernelHandle, CudaSource
+from lws.domain.device.decisions import CompileTarget, SupportVerdict
+from lws.domain.device.properties import DeviceProperties, SoftwareVersions
 
 
 class FakeWeightSource:
@@ -42,3 +45,39 @@ class FakePackedStore:
 
     def write_shard(self, shard: PackedShard) -> None:
         self.written_shards.append(shard)
+
+
+class FakeGpuProbe:
+    """A GpuProbe that reports a fixed, hand-built device — no GPU needed."""
+
+    def __init__(self, properties: DeviceProperties, software: SoftwareVersions, smoke_test_result: SupportVerdict) -> None:
+        self._properties = properties
+        self._software = software
+        self._smoke_test_result = smoke_test_result
+
+    def properties(self) -> DeviceProperties:
+        return self._properties
+
+    def software_versions(self) -> SoftwareVersions:
+        return self._software
+
+    def smoke_test(self) -> SupportVerdict:
+        return self._smoke_test_result
+
+
+class FakeCompiledKernelHandle:
+    """A CompiledKernelHandle carrying nothing but the target it was 'compiled' for."""
+
+    def __init__(self, target: CompileTarget) -> None:
+        self.target = target
+
+
+class FakeKernelCompiler:
+    """A KernelCompiler that records what it was asked to compile instead of calling NVRTC."""
+
+    def __init__(self) -> None:
+        self.compiled: list[tuple[CudaSource, CompileTarget]] = []
+
+    def compile(self, source: CudaSource, target: CompileTarget) -> CompiledKernelHandle:
+        self.compiled.append((source, target))
+        return FakeCompiledKernelHandle(target)
