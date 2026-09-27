@@ -106,3 +106,16 @@ class Se12CodecWeightDecoder:
         selected = matrix[row_values, :]
         flattened = selected.reshape(-1).copy()
         return Bf16Weights(bit_pattern=flattened)
+
+
+class FakeMatVecKernel:
+    """A MatVecKernel that records what it was asked to multiply and returns
+    a fixed, pre-set result — no GPU needed."""
+
+    def __init__(self, result) -> None:
+        self.result = result
+        self.calls: list = []
+
+    def multiply(self, activations):
+        self.calls.append(activations)
+        return self.result

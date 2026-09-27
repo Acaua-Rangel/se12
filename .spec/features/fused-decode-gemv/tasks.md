@@ -25,7 +25,7 @@
 - Effort: high
 - Notes: src/lws/adapters/cuda/nvrtc_compiler.py is a read-only dependency (runs after T-011). Needs weight-codec done (`lws.domain.se12` is the oracle). The `WeightDecoder` port has this CUDA adapter and a CPU fake backed by the domain codec. The adapter crosses torch ↔ CuPy via DLPack and can decode either a whole tensor or only a given set of row tiles (used by the compressed embedding lookup, weight-codec Q-002). se12_common.cuh holds the device decode function reused by T-005 (codebook pre-shifted to `exp << 23`, see design.md). No arch-specific code needed here. Tests marked `gpu`; the bit-exact test also carries @principle:P-004 and is parametrized over the SASS and the forced-PTX target (AC-022's last clause).
 
-## T-005 — Raw-BF16 baseline kernel and fused SE12 decode + GEMV kernel [pending]
+## T-005 — Raw-BF16 baseline kernel and fused SE12 decode + GEMV kernel [concluida]
 
 - Refs: US-005, AC-010, AC-011, AC-032
 - Files: src/lws/adapters/cuda/kernels/gemv_raw_bf16.cu, src/lws/adapters/cuda/kernels/gemv_se12.cu, src/lws/domain/launch/__init__.py, src/lws/domain/launch/heuristic.py, src/lws/application/ports/gpu/matvec_kernel.py, src/lws/adapters/cuda/gemv.py, tests/test_spec_fused_gemv.py, src/lws/adapters/cuda/kernels/se12_common.cuh
