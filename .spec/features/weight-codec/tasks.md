@@ -13,7 +13,7 @@
   every later task.
 -->
 
-## T-001 — Hexagonal skeleton, architecture fitness test and entropy analyzer [pending]
+## T-001 — Hexagonal skeleton, architecture fitness test and entropy analyzer [concluida]
 
 - Refs: US-001, AC-001, AC-002
 - Files: src/lws/__init__.py, src/lws/domain/__init__.py, src/lws/domain/entropy/__init__.py, src/lws/domain/entropy/report.py, src/lws/application/__init__.py, src/lws/application/ports/__init__.py, src/lws/application/ports/codec/__init__.py, src/lws/application/ports/codec/weight_source.py, src/lws/application/codec/__init__.py, src/lws/application/codec/analyze_model.py, src/lws/adapters/__init__.py, src/lws/adapters/safetensors/__init__.py, src/lws/adapters/safetensors/weight_source.py, src/lws/analyze.py, tests/fakes.py, tests/test_principle_architecture.py, tests/test_spec_analyze.py
