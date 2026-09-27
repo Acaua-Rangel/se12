@@ -1,0 +1,11 @@
+{
+  "testCommand": "python -m pytest -q --color=no --onp-tap tests",
+  "reporter": "tap",
+  "testGlobs": ["tests/**"],
+  "srcGlobs": ["src/**"],
+  "parallel": {
+    "maxParallel": 3,
+    "model": "claude-sonnet-5",
+    "effort": "medium"
+  }
+}

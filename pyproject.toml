@@ -1,0 +1,34 @@
+[project]
+name = "lws"
+version = "0.1.0"
+description = "Lossless weight streaming: fixed-rate lossless BF16 weight compression with on-the-fly GPU decode for LLM inference on any NVIDIA GPU (sm_60 to sm_120)"
+requires-python = ">=3.11"
+dependencies = [
+  "torch>=2.4",
+  "cupy-cuda12x>=13.4",  # CUDA 12: the last toolchain that targets both sm_60 and sm_120
+  "numpy>=1.26",
+  "safetensors>=0.4",
+  "transformers>=4.50",
+]
+
+[project.optional-dependencies]
+server = ["fastapi>=0.110", "uvicorn>=0.29"]
+vllm = ["vllm"]  # separate environment recommended: vLLM pins its own torch
+dev = ["pytest>=8", "httpx>=0.27"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+lws = ["adapters/cuda/kernels/*.cu", "adapters/cuda/kernels/*.cuh"]
+
+[tool.pytest.ini_options]
+markers = [
+  "gpu: needs a CUDA GPU (skipped otherwise — a skip is never proof)",
+  "sanitizer: needs compute-sanitizer from the CUDA toolkit (skipped otherwise)",
+  "model: needs LWS_MODEL_DIR pointing to the original BF16 model (skipped otherwise)",
+]
