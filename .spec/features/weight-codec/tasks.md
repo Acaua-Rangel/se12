@@ -37,7 +37,7 @@
 - Effort: medium
 - Notes: src/lws/domain/se12/codec.py is a read-only dependency (runs after T-002). The container (format name, version rule, per-tensor metadata) is domain; reading/writing safetensors is the `PackedStore` adapter. Hash test carries @principle:P-003. Eligibility rules (Q-002) live in one place, in the pack use case. Pack tensor by tensor (never the whole model in RAM — ASM-015). The test that packing twice gives identical bytes and that the metadata holds no device/arch/tuning key carries @principle:P-010. The tied embedding is eligible (Q-002).
 
-## T-017 — Entropy survey across model families [pending]
+## T-017 — Entropy survey across model families [concluida]
 
 - Refs: US-001, AC-034
 - Files: src/lws/domain/entropy/survey.py, src/lws/application/codec/survey_models.py, src/lws/adapters/huggingface/__init__.py, src/lws/adapters/huggingface/shard_stream_source.py, src/lws/survey.py, tests/test_spec_survey.py, src/lws/domain/se12/codec.py

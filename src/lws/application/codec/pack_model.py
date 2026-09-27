@@ -14,8 +14,8 @@ import dataclasses
 from lws.application.ports.codec.pack_source import PackSource, ShardOfTensors
 from lws.application.ports.codec.packed_store import PackedEntries, PackedEntry, PackedShard, PackedStore, PassThroughTensor, Se12PackedTensor
 from lws.application.ports.codec.weight_source import EligibleTensor, IneligibleSourceTensor, SourceTensor
-from lws.domain.se12.codec import Se12Tensor, encode_tensor
-from lws.domain.se12.summary import ByteCount, ByteSizes, add_sizes, zero_sizes
+from lws.domain.se12.codec import encode_tensor
+from lws.domain.se12.summary import ByteCount, ByteSizes, add_sizes, se12_tensor_byte_size, zero_sizes
 from lws.domain.se12.tile import MatrixShape
 from lws.domain.weights import ElementCount, RawTensor, RawTensorPayload, ShapedWeights, bf16_weights_as_raw_bytes
 
@@ -126,8 +126,8 @@ def _pack_as_se12(name: str, shaped: ShapedWeights, dims: tuple[int, ...]) -> _P
     encoded = encode_tensor(weights, matrix_shape)
     entry = Se12PackedTensor(name=name, encoded=encoded)
     original_bytes = _bf16_byte_size(dims)
-    packed_bytes = _se12_byte_size(encoded)
-    sizes = ByteSizes(original=ByteCount(original_bytes), packed=ByteCount(packed_bytes))
+    packed_bytes = se12_tensor_byte_size(encoded)
+    sizes = ByteSizes(original=ByteCount(original_bytes), packed=packed_bytes)
     return _PackedItemResult(entry=entry, eligible_sizes=sizes)
 
 
@@ -152,23 +152,3 @@ def _bf16_byte_size(dims: tuple[int, ...]) -> int:
     total_elements = dims[0] * dims[1]
     bytes_per_element = 2
     return total_elements * bytes_per_element
-
-
-def _se12_byte_size(encoded: Se12Tensor) -> int:
-    streams = encoded.streams
-    primary = streams.primary
-    escape_handling = streams.escape_handling
-    fallback = escape_handling.fallback
-    metadata = encoded.metadata
-    codebook = metadata.codebook
-    stream_total = _stream_bytes(primary.sm) + _stream_bytes(primary.ec) + _stream_bytes(escape_handling.esc)
-    stream_total += _stream_bytes(fallback.bitmap) + _stream_bytes(fallback.raw)
-    codebook_exponents = codebook.exponents
-    codebook_total = len(codebook_exponents)
-    return stream_total + codebook_total
-
-
-def _stream_bytes(stream) -> int:
-    array = stream.value
-    size = array.nbytes
-    return int(size)

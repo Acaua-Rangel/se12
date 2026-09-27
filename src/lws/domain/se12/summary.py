@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import dataclasses
 
+from lws.domain.se12.codec import Se12Tensor
+
 MAX_PACKED_RATIO = 0.78
 
 
@@ -64,3 +66,27 @@ def add_sizes(first: ByteSizes, second: ByteSizes) -> ByteSizes:
 
 def zero_sizes() -> ByteSizes:
     return ByteSizes(original=ByteCount(0), packed=ByteCount(0))
+
+
+def se12_tensor_byte_size(encoded: Se12Tensor) -> ByteCount:
+    """Every byte an SE12-encoded tensor occupies: the sm/ec/esc/fallback
+    streams plus the codebook (design.md, "Container"). Shared by pack_model
+    (AC-006's ratio) and the entropy survey (AC-034's projected bits/weight),
+    so the two features can never silently disagree on what "packed" means."""
+    streams = encoded.streams
+    primary = streams.primary
+    escape_handling = streams.escape_handling
+    fallback = escape_handling.fallback
+    metadata = encoded.metadata
+    codebook = metadata.codebook
+    stream_total = _stream_bytes(primary.sm) + _stream_bytes(primary.ec) + _stream_bytes(escape_handling.esc)
+    stream_total += _stream_bytes(fallback.bitmap) + _stream_bytes(fallback.raw)
+    codebook_exponents = codebook.exponents
+    codebook_total = len(codebook_exponents)
+    return ByteCount(stream_total + codebook_total)
+
+
+def _stream_bytes(stream) -> int:
+    array = stream.value
+    size = array.nbytes
+    return int(size)

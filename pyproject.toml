@@ -9,6 +9,7 @@ dependencies = [
   "numpy>=1.26",
   "safetensors>=0.4",
   "transformers>=4.50",
+  "huggingface_hub>=0.25",
 ]
 
 [project.optional-dependencies]
