@@ -10,21 +10,22 @@ from __future__ import annotations
 
 import typing
 
-from lws.domain.weights import Bf16Weights
+from lws.domain.weights import RawTensor, ShapedWeights
 
 
 class EligibleTensor(typing.NamedTuple):
     """A BF16 tensor, ready for entropy measurement or encoding."""
 
     name: str
-    weights: Bf16Weights
+    tensor: ShapedWeights
 
 
 class IneligibleSourceTensor(typing.NamedTuple):
-    """A tensor that is not BF16 — reported, never crashed on (AC-002)."""
+    """A tensor that is not BF16 — reported (AC-002) and, for packing, copied
+    through unchanged (AC-007), never crashed on."""
 
     name: str
-    dtype: str
+    tensor: RawTensor
 
 
 SourceTensor = EligibleTensor | IneligibleSourceTensor

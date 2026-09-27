@@ -18,7 +18,7 @@ from lws import analyze
 from lws.adapters.safetensors.weight_source import SafetensorsWeightSource
 from lws.application.codec.analyze_model import analyze_model
 from lws.application.ports.codec.weight_source import EligibleTensor, IneligibleSourceTensor
-from lws.domain.weights import Bf16Weights
+from lws.domain.weights import Bf16Weights, RawBytes, RawTensor, RawTensorPayload, ShapedWeights, TensorShape
 from tests.fakes import FakeWeightSource
 
 
@@ -27,10 +27,22 @@ def _bf16_bit_pattern(values: list[float]) -> numpy.ndarray:
     return tensor.view(torch.int16).numpy().copy()
 
 
+def _eligible(name: str, pattern: numpy.ndarray) -> EligibleTensor:
+    weights = Bf16Weights(bit_pattern=pattern)
+    shape = TensorShape(dims=(pattern.size,))
+    return EligibleTensor(name=name, tensor=ShapedWeights(weights=weights, shape=shape))
+
+
+def _ineligible(name: str, dtype_name: str, element_count: int = 1) -> IneligibleSourceTensor:
+    raw_array = numpy.zeros(element_count, dtype=numpy.uint8)
+    payload = RawTensorPayload(bytes_value=RawBytes(value=raw_array), shape=TensorShape(dims=(element_count,)))
+    return IneligibleSourceTensor(name=name, tensor=RawTensor(dtype_name=dtype_name, payload=payload))
+
+
 def test_analyze_model_reports_every_required_number():
     """@spec:AC-001"""
     pattern = _bf16_bit_pattern([1.0, -1.0, 2.0, -2.0, 0.5, 3.0, 4.0, 5.0])
-    source = FakeWeightSource([EligibleTensor(name="layer.weight", weights=Bf16Weights(bit_pattern=pattern))])
+    source = FakeWeightSource([_eligible("layer.weight", pattern)])
     report = analyze_model(source)
     per_tensor = report.per_tensor.items
     assert len(per_tensor) == 1
@@ -51,9 +63,9 @@ def test_analyze_model_lists_ineligible_tensors_and_does_not_crash():
     pattern = _bf16_bit_pattern([1.0, 2.0])
     source = FakeWeightSource(
         [
-            EligibleTensor(name="w", weights=Bf16Weights(bit_pattern=pattern)),
-            IneligibleSourceTensor(name="norm.scale", dtype="torch.float32"),
-            IneligibleSourceTensor(name="mask", dtype="torch.bool"),
+            _eligible("w", pattern),
+            _ineligible("norm.scale", "torch.float32"),
+            _ineligible("mask", "torch.bool"),
         ]
     )
     report = analyze_model(source)
@@ -65,8 +77,7 @@ def test_analyze_model_lists_ineligible_tensors_and_does_not_crash():
 def test_top15_coverage_is_one_when_five_or_fewer_exponents_are_used():
     """@spec:AC-001 — a small, controlled distribution makes the coverage number checkable by hand."""
     pattern = _bf16_bit_pattern([1.0] * 100 + [2.0] * 100)
-    weights = Bf16Weights(bit_pattern=pattern)
-    source = FakeWeightSource([EligibleTensor(name="t", weights=weights)])
+    source = FakeWeightSource([_eligible("t", pattern)])
     report = analyze_model(source)
     named = report.per_tensor.items[0]
     assert named.report.statistics.exponent.top_coverage.value == pytest.approx(1.0)

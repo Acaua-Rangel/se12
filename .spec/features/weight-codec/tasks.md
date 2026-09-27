@@ -29,7 +29,7 @@
 - Effort: high
 - Notes: src/lws/adapters/safetensors/weight_source.py is a read-only dependency (runs after T-001; used by the AC-004 real-model test). Domain code: numpy integer ops only, no torch. Follow design.md exactly (tile shape, escape budget, fallback bitmap); `TileShape`, `EscapeBudget`, `Codebook` and `Bf16Weights` (first-class collection over the int16 array) are value objects. The bit-exact test also carries @principle:P-004. AC-004 test is marked `model` (skips without LWS_MODEL_DIR — a skip is not proof, so run it on the GPU box).
 
-## T-003 — Packed container and packer CLI [pending]
+## T-003 — Packed container and packer CLI [concluida]
 
 - Refs: US-003, AC-006, AC-007, AC-008
 - Files: src/lws/domain/se12/container.py, src/lws/application/ports/codec/packed_store.py, src/lws/application/codec/pack_model.py, src/lws/adapters/safetensors/packed_store.py, src/lws/pack.py, tests/test_spec_pack.py, src/lws/domain/se12/codec.py

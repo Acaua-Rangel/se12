@@ -15,14 +15,21 @@ import typing
 import safetensors
 import torch
 
+from lws.application.ports.codec.pack_source import ShardOfTensors
 from lws.application.ports.codec.weight_source import EligibleTensor, IneligibleSourceTensor, SourceTensor
-from lws.domain.weights import Bf16Weights
+from lws.domain.weights import Bf16Weights, RawBytes, RawTensor, RawTensorPayload, ShapedWeights, TensorShape
 
 SHARD_GLOB = "*.safetensors"
 
 
 class SafetensorsWeightSource:
-    """Streams every tensor of every shard in a model directory, in order."""
+    """Streams every tensor of every shard in a model directory.
+
+    Implements two ports from the same underlying read logic: `tensors()`
+    (WeightSource, one flat pass — the entropy analyzer) and `shards()`
+    (PackSource, grouped by shard — the packer, which must mirror shard
+    boundaries in its output, weight-codec design.md "Container").
+    """
 
     def __init__(self, model_directory: pathlib.Path) -> None:
         self.model_directory = model_directory
@@ -30,6 +37,10 @@ class SafetensorsWeightSource:
     def tensors(self) -> typing.Iterator[SourceTensor]:
         for shard_path in _shard_paths(self.model_directory):
             yield from _read_shard(shard_path)
+
+    def shards(self) -> typing.Iterator[ShardOfTensors]:
+        for shard_path in _shard_paths(self.model_directory):
+            yield ShardOfTensors(shard_name=shard_path.name, tensors=_read_shard(shard_path))
 
 
 def _shard_paths(model_directory: pathlib.Path) -> list[pathlib.Path]:
@@ -55,11 +66,27 @@ def _read_one(shard: typing.Any, name: str) -> SourceTensor:
     dtype = tensor.dtype
     if dtype == torch.bfloat16:
         return _as_eligible(name, tensor)
-    return IneligibleSourceTensor(name=name, dtype=str(dtype))
+    return _as_ineligible(name, tensor)
 
 
 def _as_eligible(name: str, tensor: torch.Tensor) -> EligibleTensor:
+    shape = TensorShape(dims=tuple(tensor.shape))
     flattened = tensor.reshape(-1)
     bit_view = flattened.view(torch.int16)
     array = bit_view.numpy().copy()
-    return EligibleTensor(name=name, weights=Bf16Weights(bit_pattern=array))
+    weights = Bf16Weights(bit_pattern=array)
+    shaped = ShapedWeights(weights=weights, shape=shape)
+    return EligibleTensor(name=name, tensor=shaped)
+
+
+def _as_ineligible(name: str, tensor: torch.Tensor) -> IneligibleSourceTensor:
+    shape = TensorShape(dims=tuple(tensor.shape))
+    dtype_name = str(tensor.dtype)
+    flattened = tensor.reshape(-1)
+    contiguous = flattened.contiguous()
+    byte_view = contiguous.view(torch.uint8)
+    raw_array = byte_view.numpy().copy()
+    raw_bytes = RawBytes(value=raw_array)
+    payload = RawTensorPayload(bytes_value=raw_bytes, shape=shape)
+    raw_tensor = RawTensor(dtype_name=dtype_name, payload=payload)
+    return IneligibleSourceTensor(name=name, tensor=raw_tensor)

@@ -38,6 +38,46 @@ class Bf16Weights:
 
 
 @dataclasses.dataclass(frozen=True)
+class TensorShape:
+    """First-class collection: a tensor's dimensions, in order."""
+
+    dims: tuple[int, ...]
+
+
+@dataclasses.dataclass(frozen=True)
+class ShapedWeights:
+    """A BF16 tensor's flat weights together with its original shape — the
+    shape a flat Bf16Weights alone cannot carry, and packing (unlike entropy
+    measurement) needs to decide whether a tensor tiles as a 2-D matrix."""
+
+    weights: Bf16Weights
+    shape: TensorShape
+
+
+@dataclasses.dataclass(frozen=True)
+class RawBytes:
+    """First-class collection: a tensor's raw memory, as a flat uint8 buffer."""
+
+    value: numpy.ndarray
+
+
+@dataclasses.dataclass(frozen=True)
+class RawTensorPayload:
+    bytes_value: RawBytes
+    shape: TensorShape
+
+
+@dataclasses.dataclass(frozen=True)
+class RawTensor:
+    """A tensor that is not eligible for SE12 (wrong dtype, or BF16 but not
+    2-D — weight-codec ASM-002/Q-002): its exact bytes, dtype name and shape,
+    enough to copy it through unchanged (AC-007)."""
+
+    dtype_name: str
+    payload: RawTensorPayload
+
+
+@dataclasses.dataclass(frozen=True)
 class ExponentBytes:
     """First-class collection: one 8-bit BF16 exponent per weight (bits 14..7)."""
 
@@ -77,3 +117,11 @@ def join_bit_pattern(exponent: ExponentBytes, sign_mantissa: SignMantissaBytes) 
     unsigned = sign | (exponent_wide << 7) | mantissa
     bit_pattern = unsigned.astype(numpy.int16)
     return Bf16Weights(bit_pattern=bit_pattern)
+
+
+def bf16_weights_as_raw_bytes(weights: Bf16Weights) -> RawBytes:
+    """A BF16 tensor's exact memory as a flat uint8 buffer (for packing it
+    through unchanged when it is not 2-D — weight-codec ASM-002/Q-002)."""
+    pattern = weights.bit_pattern
+    byte_view = pattern.view(numpy.uint8)
+    return RawBytes(value=byte_view)

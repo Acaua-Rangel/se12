@@ -43,12 +43,14 @@ def _accumulate(
 
 def _measure_named(item: EligibleTensor) -> NamedTensorEntropyReport:
     name = item.name
-    weights = item.weights
+    shaped = item.tensor
+    weights = shaped.weights
     report = measure_tensor(weights)
     return NamedTensorEntropyReport(name=name, report=report)
 
 
 def _as_ineligible(item: IneligibleSourceTensor) -> IneligibleTensor:
     name = item.name
-    dtype = item.dtype
+    raw_tensor = item.tensor
+    dtype = raw_tensor.dtype_name
     return IneligibleTensor(name=name, dtype=dtype)
