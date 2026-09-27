@@ -12,7 +12,12 @@ from __future__ import annotations
 
 import typing
 
+from lws.domain.launch.heuristic import LaunchConfiguration
+
 
 class MatVecKernel(typing.Protocol):
-    def multiply(self, activations: typing.Any) -> typing.Any:
+    def multiply(self, activations: typing.Any, launch: LaunchConfiguration | None = None) -> typing.Any:
+        """`launch=None` uses the domain heuristic automatically; an explicit
+        LaunchConfiguration is how the tuner (US-013) times alternatives and
+        how a runtime with a cached tuning result (AC-024) reuses it."""
         ...

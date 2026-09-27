@@ -119,3 +119,28 @@ class FakeMatVecKernel:
     def multiply(self, activations):
         self.calls.append(activations)
         return self.result
+
+
+class FakeTuningCache:
+    """A TuningCache that keeps its file in memory instead of on disk."""
+
+    def __init__(self, initial=None) -> None:
+        self.stored = initial
+        self.saved_files: list = []
+
+    def load(self):
+        return self.stored
+
+    def save(self, tuning_file) -> None:
+        self.stored = tuning_file
+        self.saved_files.append(tuning_file)
+
+
+class FakeCandidateEvaluator:
+    """A CandidateEvaluator returning fixed, pre-set results per configuration."""
+
+    def __init__(self, results: dict) -> None:
+        self.results = results
+
+    def evaluate(self, configuration):
+        return self.results[configuration]

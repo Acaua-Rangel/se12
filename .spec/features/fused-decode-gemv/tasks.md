@@ -33,7 +33,7 @@
 - Effort: max
 - Notes: src/lws/adapters/cuda/kernels/se12_common.cuh is a read-only dependency (runs after T-004). Write BOTH kernels from the same skeleton (principle P-009): tune the raw one first, then swap its load step for load+decode. Activations FP32 or BF16 (exact upcast), output always FP32 (principle P-005). Any `__CUDA_ARCH__`-guarded load path must exist in both kernels, with a generic path for sm_60. The default launch configuration is a pure domain rule (`lws.domain.launch`) over `DeviceProperties` and the shape; the `MatVecKernel` adapter applies it (or a tuned one when present). FP64 reference in VRAM-sized row chunks. Kernels must be capture-safe (no host sync, no allocation; output buffer passed in). The launch path is a hot path: P-014 rules 3/5/8/9 are relaxed there (constitution). The test asserting identical launch structure carries @principle:P-009. Reduction order is fully determined by the launch configuration (no atomics, fixed warp-reduction tree), so the same configuration gives bit-identical outputs (AC-032). gemv_se12.cu also takes a compile-time `LWS_EXTRA_DECODE_OPS` (default 0) used only by performance-model AC-027 — k dependent integer ops per weight in inline PTX that leave the decoded value unchanged.
 
-## T-012 — Per-GPU launch tuner [pending]
+## T-012 — Per-GPU launch tuner [concluida]
 
 - Refs: US-013, AC-024
 - Files: src/lws/domain/launch/search_space.py, src/lws/application/ports/gpu/tuning_cache.py, src/lws/application/gpu/tune_launch.py, src/lws/adapters/filesystem/__init__.py, src/lws/adapters/filesystem/tuning_cache.py, src/lws/tune.py, tests/test_spec_tune.py, src/lws/adapters/cuda/gemv.py

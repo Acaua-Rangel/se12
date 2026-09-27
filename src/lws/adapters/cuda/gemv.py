@@ -24,7 +24,7 @@ import torch
 from lws.application.ports.gpu.kernel_compiler import CudaSource, KernelCompiler
 from lws.domain.device.decisions import CompileTarget
 from lws.domain.device.properties import SmCount
-from lws.domain.launch.heuristic import GemvShape, default_launch_configuration
+from lws.domain.launch.heuristic import GemvShape, LaunchConfiguration, default_launch_configuration
 from lws.domain.se12.codec import Se12Tensor
 from lws.domain.se12.tile import TileShape
 
@@ -32,6 +32,11 @@ KERNELS_DIR = pathlib.Path(__file__).parent / "kernels"
 HEADER_FILE = KERNELS_DIR / "se12_common.cuh"
 INCLUDE_DIRECTIVE = '#include "se12_common.cuh"'
 TILE_SIZE = 16 * 256
+
+
+def _default_launch(sm_count: SmCount, output_rows: int, batch_size: int) -> LaunchConfiguration:
+    gemv_shape = GemvShape(output_rows=output_rows, batch_size=batch_size)
+    return default_launch_configuration(sm_count, gemv_shape)
 
 
 # --------------------------------------------------------------------------
@@ -149,15 +154,14 @@ class RawBf16MatVecKernel:  # calisthenics: allow 8 — hot-path kernel wrapper,
         self.k = shape[1]
         self.sm_count = sm_count
 
-    def multiply(self, activations: torch.Tensor) -> torch.Tensor:
+    def multiply(self, activations: torch.Tensor, launch: LaunchConfiguration | None = None) -> torch.Tensor:
         shape = activations.shape
         batch_size = shape[0]
-        gemv_shape = GemvShape(output_rows=self.output_rows, batch_size=batch_size)
-        launch = default_launch_configuration(self.sm_count, gemv_shape)
+        resolved_launch = launch if launch is not None else _default_launch(self.sm_count, self.output_rows, batch_size)
         activations_device = _activations_to_device(activations)
         output_device = cupy.empty(self.output_rows * batch_size, dtype=cupy.float32)
-        threads_per_block = launch.threads_per_block
-        block_count = launch.blocks
+        threads_per_block = resolved_launch.threads_per_block
+        block_count = resolved_launch.blocks
         threads = threads_per_block.value
         blocks = block_count.value
         self.kernel(
@@ -189,15 +193,14 @@ class Se12MatVecKernel:  # calisthenics: allow 8 — hot-path kernel wrapper, co
         self.k = shape.cols
         self.sm_count = sm_count
 
-    def multiply(self, activations: torch.Tensor) -> torch.Tensor:
+    def multiply(self, activations: torch.Tensor, launch: LaunchConfiguration | None = None) -> torch.Tensor:
         shape = activations.shape
         batch_size = shape[0]
-        gemv_shape = GemvShape(output_rows=self.output_rows, batch_size=batch_size)
-        launch = default_launch_configuration(self.sm_count, gemv_shape)
+        resolved_launch = launch if launch is not None else _default_launch(self.sm_count, self.output_rows, batch_size)
         activations_device = _activations_to_device(activations)
         output_device = cupy.empty(self.output_rows * batch_size, dtype=cupy.float32)
-        threads_per_block = launch.threads_per_block
-        block_count = launch.blocks
+        threads_per_block = resolved_launch.threads_per_block
+        block_count = resolved_launch.blocks
         threads = threads_per_block.value
         blocks = block_count.value
         arrays = self.device_arrays
